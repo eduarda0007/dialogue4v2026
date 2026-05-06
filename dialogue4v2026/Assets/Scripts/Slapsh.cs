@@ -1,16 +1,24 @@
 using UnityEngine;
+using System.Collections;
 
-public class SplashController : MonoBehaviour
+public class SplashScreen : MonoBehaviour
 {
-    public float tempo = 2f;
-
-    void Start()
+    private void Start()
     {
-        Invoke("IrParaMenu", tempo);
+        StartCoroutine(AguardarESeguir());
     }
 
-    void IrParaMenu()
+    private IEnumerator AguardarESeguir()
     {
-        GameManager.Instance.LoadScene("MenuPrincipal");
+        yield return new WaitForSeconds(2f);
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadScene("Menu");
+        }
+        else
+        {
+            Debug.LogError("GameManager não encontrado na Splash!");
+        }
     }
 }
