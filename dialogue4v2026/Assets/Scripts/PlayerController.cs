@@ -5,18 +5,21 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Input")]
-    [Tooltip("Drag the Move action (Vector2) from the Input System asset here (use an Input Action Reference)")]
+    [Tooltip("Drag the Move action (Vector2) from the Input System asset here")]
     public InputActionReference moveAction;
 
     [Header("Movement")]
-    [Tooltip("Acceleration applied to the rigidbody when input is received (units/s^2)")]
+    [Tooltip("Acceleration applied to the rigidbody when input is received")]
     public float moveAcceleration = 10f;
 
     [Tooltip("Maximum horizontal speed (m/s). Set to <= 0 to disable clamping.")]
     public float maxSpeed = 6f;
 
-    Rigidbody m_Rigidbody;
-    Vector2 m_MoveInput;
+    [Header("Coins")]
+    private int coins = 0;
+
+    private Rigidbody m_Rigidbody;
+    private Vector2 m_MoveInput;
 
     void Awake()
     {
@@ -52,8 +55,49 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-       
-            
-     
+        if (m_Rigidbody == null)
+            return;
+
+        // Convert 2D input (x,y) to world X,Z
+        Vector3 desired = new Vector3(m_MoveInput.x, 0f, m_MoveInput.y);
+
+        if (desired.sqrMagnitude > 0f)
+        {
+            Vector3 accel = desired.normalized * moveAcceleration;
+            m_Rigidbody.AddForce(accel, ForceMode.Acceleration);
+        }
+
+        // Clamp horizontal velocity
+        if (maxSpeed > 0f)
+        {
+            Vector3 horizontalVel = new Vector3(
+                m_Rigidbody.linearVelocity.x,
+                0f,
+                m_Rigidbody.linearVelocity.z
+            );
+
+            float speed = horizontalVel.magnitude;
+
+            if (speed > maxSpeed)
+            {
+                Vector3 limited = horizontalVel.normalized * maxSpeed;
+                m_Rigidbody.linearVelocity = new Vector3(
+                    limited.x,
+                    m_Rigidbody.linearVelocity.y,
+                    limited.z
+                );
+            }
+        }
+    }
+
+    // ===== COINS =====
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Coin"))
+        {
+            coins++;
+            PlayerObserverManager.NotifyCoinCollected(coins);
+            Destroy(other.gameObject);
+        }
     }
 }
